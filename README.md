@@ -1,1 +1,1 @@
-This are codes for a DSTL Kaggle competition
+These are codes for the DSTL Kaggle competition
