@@ -1,0 +1,28 @@
+Here is a description of my model that I developed for that competition. It has a lower public LB score than the top models (24th actually on the public LB), however, I used a bit different algorithms and would like to share my experience.
+
+## Data selection
+I decided to work only with M-band images. There were two reasons to do that: 
+
+ 1. Misalignment between 3, A,M and P bands (thanks to @visoft),
+ 2. The indices like Normalized Difference Vegetation Index (NDVI), Enhanced Vegetation Indices (EVI) and many others use information from multispectral data. For road detection one can use BAI (built-up area index) and REI (Road extraction index) indices. Most of these indices has the same formula but use different bands. Therefore, I decided to use NDVI formula with different combinations of bands, and derived new features. As the result I got 8 M-band features + 20 combinations of these.
+
+## Algorithms
+I created individual models for each class of objects because each pixel may belong to a few classes, and it was unclear to me how to distinguish between them within one multiclass model. For each model I used only three algorithms : XGBooost, Random Forest (RF) and Neural Network (ANN) with 2 or 3  hidden layers. XGB and RF were exploited in almost all my models but parameters were set up individually for each class. Especially, they worked pretty well for the highly unbalanced classes (cars and buildings). ANN was good in water and trees detection. 
+
+Then I tried to combine predictions from a different models. Simple averaging of predictions didn't produced a desired result. I think it happened, because XGB and RF algorithm were able to classify almost all positive examples quite successfully, but also produced a lot of false positive examples (noise). Therefore, I used logical_and method in order to combine different predictions, i.e. pixel was classified as 1 only if it was predicted to be 1 by all the models. Such a technique helped me to reduce a noise level to minimum. Especially it helped with the class 5 (Trees) where most of the models classified crop as trees.
+
+**Water class.**  I created one model for water detection. RF, XGB and ANN were able to recognize water quite successfully. But the question was how to separate waterways and standing water. So, first of all, I realized that if an image contains a waterway (like a river), a waterway must intersect two or more edges of the image. River cannot has a source and mouth on a 1 km^2 area. If object intersects image's edge only once and if object's area is less than some threshold value (I tried 5000 and 10000 in pixel units, but these two values are not optimal) that object is classified as standing water; otherwise it is a waterway. Also, if image contains a waterway, then all recognized objects are classified as a waterway as well. As the result, my best prediction for a waterway was 0.09749, and for a standing water 0.06305.
+
+**Large and small vehicles.** For these two classes I also created one model, because small cars and large trucks are made of the same material and only different in a size. Model consisted from combination of three XGB models. I distinguished small and large cars by area, however, only large vehicles were "successfully identified": best public LB score was 0.02743. For small cars I wasn't able to get more than 0.00000.
+
+**Roads.** Road detection problem is well studied. I easily found a lot of papers about it in internet, but would like to mention two of them:
+
+ 1. "A novel spectral index to automatically extract roads networks from WorldView-2 satellite imagery", Kaveh Shahi et al., *The Egyptian Journal of Remote Sensing and Space Science*, 2015. This paper contains description of BAI and REI indices that I used for a road detection.
+ 2. "A review of road extraction from remote sensing images", Weixing Wang et al., *Journal of traffic and Transportation Engineering*, 2016. This paper describes a lot of different techniques, including ML methods such as ANN and SVM. Unfortunately, I didn't had enough time to try all of them. This paper may be interesting for those who want to make a research in that field.
+
+My best score for the class 3:  0.08141
+
+**All other classes**
+For all other classes I used XGB and RF algorithms without any specific tricks and don't want to pay attention on them. Only would like to say that my best prediction for the class 1 is 0.06543, for the class 2 is 0.00378 (very low), and for the class 6 is 0.07317. And I don't have individual scores for class 4, because I added prediction for this class directly to my total prediction. For class 5 (Trees) it was hard to get an individual score, and I submitted predictions within a total submission with other classes as well.
+
+**Afterwords**. I would like to say thank to all participants, Kaggle team and DSTL for that competition. It is the first competition that I participated from the beginning to the end. And I would like to apologize  for my English, it is not my native language. Thank you!

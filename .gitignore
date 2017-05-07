@@ -1,0 +1,6 @@
+*.png
+*.tif
+*.h5
+src/garbage
+*.zip
+*.csv
